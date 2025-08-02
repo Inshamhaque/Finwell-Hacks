@@ -1,5 +1,5 @@
 import express from 'express';
-import connectDB from './db.js';
+import connectDB from './db/db.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -12,7 +12,7 @@ app.use(express.json());
 connectDB();
 
 app.get('/', (req, res) => {
-  res.send('🚀 Server is running and DB is connected!');
+  res.send(' Server is running and DB is connected!');
 });
 
 app.listen(PORT, () => {

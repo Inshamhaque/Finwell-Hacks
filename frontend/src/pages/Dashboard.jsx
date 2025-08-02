@@ -14,7 +14,7 @@ import {
 
 const navItems = [
   { name: "Overview", link: "#overview" },
-  { name: "Learn Daily", link: "#daily-learning" },
+  { name: "Learn Daily", link: "/daily-learn" },
   { name: "Smart OCR", link: "#ocr" },
   { name: "FinCalcy Tools", link: "#tools" },
 ];
