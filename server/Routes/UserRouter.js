@@ -2,7 +2,8 @@
 import express from 'express';
 import axios from 'axios';
 import User from '../models/User.js';
-
+import { verifyToken } from '../Middleware/auth.js';
+import { generateToken } from '../Middleware/auth.js';
 const userRouter = express.Router();
 
 // 🔐 Signup Route
@@ -43,7 +44,7 @@ userRouter.post('/submit', async (req, res) => {
 
     await newUser.save();
 
-    const token=jwt.sign({userId:newUser._id})
+    const token=generateToken(newUser._id)
 
     res.status(201).json({
       message: 'User signed up and bank linked successfully',
@@ -58,7 +59,7 @@ userRouter.post('/submit', async (req, res) => {
 
 
 // 🔐 Signin Route
-userRouter.post('/signin', async (req, res) => {
+userRouter.post('/signin',verifyToken,async (req, res) => {
   const userId = req.user.userId;
 
   try {
