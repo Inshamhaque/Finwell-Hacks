@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema({
   },
   budgetPerMonth: {
     type: Number
-  },
+  }, 
   access_token: {
     type: String
   }

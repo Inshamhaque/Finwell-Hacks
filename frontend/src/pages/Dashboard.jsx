@@ -22,6 +22,10 @@ const navItems = [
 export default function Dashboard() {
   const [showButton, setShowButton] = useState(true);
   const lastScrollY = useRef(0);
+  const [userData, setUserData] = useState({})
+
+  // getting the account data
+  
 
   useEffect(() => {
     const handleScroll = () => {
