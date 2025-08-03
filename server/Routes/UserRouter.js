@@ -28,7 +28,23 @@ userRouter.post('/submit', async (req, res) => {
       email
     });
 
-    const { accessToken, accounts } = bankRes.data;
+    const { accessToken, accounts, transactions } = bankRes.data;
+
+    // Normalize: ensure transactions is an array
+    const txs = Array.isArray(transactions) ? transactions : [];
+
+    // Attach relevant transactions to each account
+    const enrichedAccounts = (Array.isArray(accounts) ? accounts : []).map((acct) => {
+      const related = txs.filter(
+        (t) =>
+          (t.fromAccountId && t.fromAccountId === acct.id) ||
+          (t.toAccountId && t.toAccountId === acct.id)
+      );
+      return {
+        ...acct,
+        transactions: related,
+      };
+    });
 
     const newUser = new User({
       name,
@@ -37,19 +53,19 @@ userRouter.post('/submit', async (req, res) => {
       googleId: googleId || undefined,
       authProvider: googleId ? 'google' : 'local',
       access_token: accessToken,
-      accounts,
+      accounts: enrichedAccounts,
       budgetPerMonth,
-      investmentSkill
+      investmentSkill,
     });
 
     await newUser.save();
 
-    const token=generateToken(newUser._id)
+    const token = generateToken(newUser._id);
 
     res.status(201).json({
       message: 'User signed up and bank linked successfully',
       user: newUser,
-      token:token
+      token: token,
     });
   } catch (err) {
     console.error('❌ Signup error:', err.message);
@@ -59,9 +75,8 @@ userRouter.post('/submit', async (req, res) => {
 
 
 // 🔐 Signin Route
-userRouter.post('/signin',verifyToken,async (req, res) => {
-  const userId = req.user.userId;
-
+userRouter.post('/signin',async (req, res) => {
+const {email,password} = req.body;
   try {
     const user = await User.findOne({ email });
 
@@ -73,22 +88,11 @@ userRouter.post('/signin',verifyToken,async (req, res) => {
     if (user.authProvider === 'local' && user.password !== password) {
       return res.status(401).json({ message: 'Invalid password' });
     }
-
-    // Step 1: Re-link bank and get updated accessToken
-    const bankRes = await axios.post('http://localhost:8080/link-bank', {
-      name: user.name,
-      email: user.email
-    });
-
-    const { accessToken } = bankRes.data;
-
-    // Step 2: Update access_token in DB
-    user.access_token = accessToken;
-    await user.save();
-
+    const token = generateToken(user._id);
     res.status(200).json({
       message: 'Signin successful, bank re-linked',
-      user
+      user,
+      token
     });
   } catch (err) {
     console.error('❌ Signin error:', err.message);
