@@ -1,9 +1,9 @@
-// server/routes/user.js
 import express from 'express';
 import axios from 'axios';
-import User from '../models/User.js';
 import { verifyToken } from '../Middleware/auth.js';
 import { generateToken } from '../Middleware/auth.js';
+import { getAll } from '../controllers/user.controller.js';
+import  User  from '../models/User.js';
 const userRouter = express.Router();
 
 // 🔐 Signup Route
@@ -190,6 +190,10 @@ await User.updateOne(
       error: err.response?.data || err.message,
     });
   }
+});
+
+userRouter.post('/getAll',verifyToken,async (req,res)=>{
+  getAll(req,res)
 });
 
 

@@ -50,7 +50,7 @@ const StepThree = ({
     console.log("selected successfully")
     localStorage.setItem("selectedAccountId", selected);
     toast.success("Account selected successfully!");
-    // proceed to dashboard or next step
+    window.location.href='/dashboard'
   };
 
   return (

@@ -1,7 +1,6 @@
-// server/middleware/auth.js
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Always use env variable in prod
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -15,13 +14,13 @@ export const verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = { userId: decoded.userId };
+    console.log(req.user)
     next();
   } catch (err) {
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
 
-// 🔐 Helper to generate JWT token
 export const generateToken = (userId) => {
   return jwt.sign({ userId }, JWT_SECRET, {
     expiresIn: '7d'
