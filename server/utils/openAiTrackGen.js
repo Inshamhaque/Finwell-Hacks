@@ -1,7 +1,7 @@
 // utils/openaiTrackGen.js
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "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" });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY  });
 
 export async function getAITrack(interest, difficulty) {
   const systemPrompt = `
