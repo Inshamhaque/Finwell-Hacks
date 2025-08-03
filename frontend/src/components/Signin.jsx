@@ -3,6 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from '../utils/db';
+import Accounts from './Accounts';
 
 const Signin = () => {
   const navigate = useNavigate();
@@ -31,25 +32,19 @@ const Signin = () => {
     if (!isValid) return;
     setLoading(true);
     try {
-      // 1. Sign in
       const res = await axios.post(`${BACKEND_URL}/user/signin`, {
         email: form.email,
         password: form.password,
       });
       const { user, token } = res.data;
 
-      // 2. Persist token / remember
       localStorage.setItem('token', token);
       if (form.remember) localStorage.setItem('rememberedEmail', form.email);
       else localStorage.removeItem('rememberedEmail');
 
       toast.success('Signed in successfully');
+      navigate('/accounts', { state: { accounts: res.data.user.accounts } });
 
-      // 3. Redirect to signup wrapper at step 3 with preloaded data
-      navigate('/signup?startStep=3', {
-        replace: true,
-        state: { preloadedUser: user, preloadedToken: token },
-      });
     } catch (err) {
       toast.error(
         err.response?.data?.message || 'Signin failed. Check credentials.'
