@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, BookOpen, Calendar, BarChart3, Gem, Coins, TrendingUp, Brain, Award, Play, ChevronRight, RotateCcw, Zap, Clock, Target, CheckCircle2 } from 'lucide-react';
 import axios from "axios";
+import { Navbar, NavbarLogo, NavBody, NavItems, NavbarButton } from '../components/ui/resizable-navbar';
 
 const BACKEND_URL = "http://localhost:3000";
-const token = localStorage.getItem("token");
+const token = localStorage.getItem("token"); // In real app, get from localStorage.getItem("token")
+
+// OpenAI API configuration - in real app, this would be in environment variables
+const OPENAI_API_KEY = "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";
 
 const learningTracks = [
   {
@@ -76,20 +80,50 @@ function getRandomTracks(arr, count) {
   return shuffled.slice(0, count);
 }
 
+const getAIExplanation = async (topic, content) => {
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'You are a friendly financial education tutor. Explain concepts clearly and provide practical examples.' },
+          { role: 'user', content: `Explain this financial topic in a clear, engaging way with practical examples: "${topic}". Base content: ${content}` }
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+      }),
+    });
+    if (!response.ok) {
+        throw new Error(`OpenAI API request failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    return `**${topic}**\n\n${content}\n\nThis is a fundamental concept in finance that will help you make better investment decisions. Take your time to understand it!`;
+  }
+};
+
 export default function DailyLearn() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [userProgress, setUserProgress] = useState(null);
   const [currentTrack, setCurrentTrack] = useState(null);
+  const [currentDayData, setCurrentDayData] = useState(null);
   const [currentQuiz, setCurrentQuiz] = useState(null);
   const [quizState, setQuizState] = useState('none'); // 'none', 'active', 'completed'
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState([]);
   const [learningState, setLearningState] = useState('idle'); // 'idle', 'learning', 'quiz', 'completed'
-  const [tracks, setTracks] = useState([]); // For progress carousel
-  const [loading,setLoading] = useState(false)
+  const [tracks, setTracks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showButton, setShowButton] = useState(false);
   const messagesEndRef = useRef(null);
 
   const [userData, setUserData] = useState({
@@ -131,28 +165,13 @@ export default function DailyLearn() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Fetch specific track data by ID
-  const fetchTrackData = async (trackId) => {
-    try {
-      const response = await axios.get(`${BACKEND_URL}/daily-learn/track/${trackId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      return response.data.track;
-    } catch (error) {
-      console.error('Error fetching track data:', error);
-      return null;
-    }
-  };
-
   const startLearningTrack = async (track) => {
     try {
       // If it's a predefined track, generate it first
       if (!track._id) {
         setIsTyping(true);
-        setLoading(true)
-        // currently days is default to 7 now.... need to modify this 
+        setLoading(true);
+        
         const response = await axios.post(`${BACKEND_URL}/daily-learn/randomTracks`, {
           topic: track.title,
           description: track.description,
@@ -163,7 +182,8 @@ export default function DailyLearn() {
             Authorization: `Bearer ${token}`
           }
         });
-        setLoading(false)
+        
+        setLoading(false);
         
         if (response.data.track) {
           track = response.data.track;
@@ -175,6 +195,7 @@ export default function DailyLearn() {
       setIsTyping(false);
       
       const currentDay = track.days.find(day => day.dayNumber === track.currentDay);
+      setCurrentDayData(currentDay);
       
       const welcomeMessage = {
         id: Date.now(),
@@ -193,23 +214,47 @@ Are you ready to begin Day ${track.currentDay}?`,
     } catch (error) {
       console.error('Error starting learning track:', error);
       setIsTyping(false);
+      setLoading(false);
     }
   };
 
-  const startDayContent = (dayData) => {
-    const contentMessage = {
-      id: Date.now(),
-      text: `**${dayData.topic}**
+  const startDayContent = async (dayData) => {
+    setIsTyping(true);
+    
+    try {
+      // Get enhanced explanation from OpenAI
+      const enhancedContent = await getAIExplanation(dayData.topic, dayData.content);
+      
+      setIsTyping(false);
+      
+      const contentMessage = {
+        id: Date.now(),
+        text: enhancedContent,
+        sender: 'ai',
+        timestamp: new Date().toISOString(),
+        options: ['I understand, start the quiz', 'Explain this more', 'Give me examples', 'Ask a question']
+      };
+      
+      setMessages(prev => [...prev, contentMessage]);
+    } catch (error) {
+      setIsTyping(false);
+      console.error('Error getting AI explanation:', error);
+      
+      // Fallback to original content
+      const contentMessage = {
+        id: Date.now(),
+        text: `**${dayData.topic}**
 
 ${dayData.content}
 
 Take your time to read and understand this content. When you're ready, I'll test your understanding with a quick quiz!`,
-      sender: 'ai',
-      timestamp: new Date().toISOString(),
-      options: ['I understand, start the quiz', 'Explain this more', 'Give me examples']
-    };
-    
-    setMessages(prev => [...prev, contentMessage]);
+        sender: 'ai',
+        timestamp: new Date().toISOString(),
+        options: ['I understand, start the quiz', 'Explain this more', 'Give me examples']
+      };
+      
+      setMessages(prev => [...prev, contentMessage]);
+    }
   };
 
   const startQuiz = (dayData) => {
@@ -247,12 +292,23 @@ ${dayData.quiz.questions[0].question}`,
     }];
     setQuizAnswers(newAnswers);
 
+    // Add user's selected answer to chat
+    const userAnswerMessage = {
+      id: Date.now(),
+      text: selectedAnswer,
+      sender: 'user',
+      timestamp: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, userAnswerMessage]);
+
     // Show feedback for current answer
     const feedbackMessage = {
-      id: Date.now(),
+      id: Date.now() + 1,
       text: isCorrect 
         ? `✅ Correct! "${selectedAnswer}" is the right answer.` 
-        : `❌ Not quite. The correct answer is "${currentQuestion.answer}".`,
+        : `❌ Not quite. The correct answer is "${currentQuestion.answer}".
+
+Let me explain: This is the correct answer because it accurately represents the concept we just discussed.`,
       sender: 'ai',
       timestamp: new Date().toISOString()
     };
@@ -267,7 +323,7 @@ ${dayData.quiz.questions[0].question}`,
         
         const nextQuestion = currentQuiz.questions[nextIndex];
         const nextQuestionMessage = {
-          id: Date.now() + 1,
+          id: Date.now() + 2,
           text: `**Question ${nextIndex + 1} of ${currentQuiz.questions.length}:**
 
 ${nextQuestion.question}`,
@@ -278,46 +334,26 @@ ${nextQuestion.question}`,
         };
         
         setMessages(prev => [...prev, nextQuestionMessage]);
-      }, 1500);
+      }, 2000);
     } else {
       // Quiz completed
       setTimeout(() => {
         completeQuiz(newAnswers);
-      }, 1500);
+      }, 2000);
     }
   };
 
   const completeQuiz = async (answers) => {
     setQuizState('completed');
+    setIsTyping(true);
     
     const correctAnswers = answers.filter(a => a.isCorrect).length;
     const score = Math.round((correctAnswers / answers.length) * 100);
     const passed = score >= 70;
 
-    const completionMessage = {
-      id: Date.now(),
-      text: `🎉 Quiz completed! 
-
-**Your Score: ${score}% (${correctAnswers}/${answers.length} correct)**
-
-${passed 
-  ? `Congratulations! You've successfully completed Day ${currentTrack.currentDay} of "${currentTrack.title}". 
-
-Your progress has been saved and you can now move to the next day!`
-  : `You scored below 70%. Don't worry! Review the material and try again when you're ready.`
-}`,
-      sender: 'ai',
-      timestamp: new Date().toISOString(),
-      options: passed 
-        ? ['Continue to next day', 'Review today\'s content', 'View my progress']
-        : ['Review content', 'Retake quiz', 'Get help']
-    };
-
-    setMessages(prev => [...prev, completionMessage]);
-
-    if (passed) {
-      // Update progress in backend
-      try {
+    try {
+      if (passed) {
+        // Call the complete-day API
         await axios.post(`${BACKEND_URL}/daily-learn/complete-day`, {
           trackId: currentTrack._id,
           dayNumber: currentTrack.currentDay,
@@ -340,12 +376,66 @@ Your progress has been saved and you can now move to the next day!`
         }));
         
         setLearningState('completed');
-        
-        // Refresh tracks in progress carousel
-        fetchAllTracks();
-      } catch (error) {
-        console.error('Failed to save progress:', error);
       }
+      
+      setIsTyping(false);
+      
+      const completionMessage = {
+        id: Date.now(),
+        text: passed 
+          ? `🎉 **Congratulations!** 
+
+**Your Score: ${score}% (${correctAnswers}/${answers.length} correct)**
+
+You've successfully completed Day ${currentDayData.dayNumber} of "${currentTrack.title}"! 
+
+✅ Your progress has been saved
+🚀 You can now move to the next day
+📈 Keep up the excellent work!
+
+${currentTrack.currentDay < currentTrack.totalDays 
+  ? `Tomorrow you'll learn about: **${currentTrack.days.find(d => d.dayNumber === currentTrack.currentDay + 1)?.topic || 'Next Topic'}**`
+  : '🏆 **Congratulations! You\'ve completed the entire track!** You\'re now ready to apply these concepts in real-world scenarios.'
+}`
+          : `📚 **Quiz Results**
+
+**Your Score: ${score}% (${correctAnswers}/${answers.length} correct)**
+
+You need at least 70% to pass. Don't worry - learning takes time and practice! 
+
+💡 **Here's what you can do:**
+- Review the content again
+- Ask me specific questions about confusing topics  
+- Try the quiz again when you feel ready
+
+Remember: Every expert was once a beginner! 🌟`,
+        sender: 'ai',
+        timestamp: new Date().toISOString(),
+        options: passed 
+          ? currentTrack.currentDay < currentTrack.totalDays
+            ? ['Continue to next day', 'Review today\'s content', 'View my progress', 'End session']
+            : ['View my progress', 'Start new track', 'Celebrate! 🎉', 'End session']
+          : ['Review content', 'Retake quiz', 'Ask for help', 'End session']
+      };
+
+      setMessages(prev => [...prev, completionMessage]);
+      
+      // Refresh tracks in progress carousel
+      fetchAllTracks();
+      
+    } catch (error) {
+      setIsTyping(false);
+      console.error('Failed to save progress:', error);
+      
+      const errorMessage = {
+        id: Date.now(),
+        text: `Quiz completed with ${score}% score, but there was an issue saving your progress. Please try again or contact support.`,
+        sender: 'ai',
+        timestamp: new Date().toISOString(),
+        options: ['Retry saving', 'Continue anyway', 'End session']
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
     }
   };
 
@@ -389,49 +479,101 @@ Your progress has been saved and you can now move to the next day!`
 
   const generateAIResponse = (userInput) => {
     if (quizState === 'active') {
-      // Handle quiz answers
-      handleQuizAnswer(userInput);
+      // This shouldn't happen as quiz answers are handled separately
       return null;
     }
 
     const responses = {
       "Start Learning": () => {
-        if (currentTrack && currentTrack.days) {
-          const currentDay = currentTrack.days.find(day => day.dayNumber === currentTrack.currentDay);
-          if (currentDay) {
-            startDayContent(currentDay);
-            return null;
-          }
+        if (currentDayData) {
+          startDayContent(currentDayData);
+          return null;
         }
       },
       "I understand, start the quiz": () => {
-        if (currentTrack && currentTrack.days) {
-          const currentDay = currentTrack.days.find(day => day.dayNumber === currentTrack.currentDay);
-          if (currentDay && currentDay.quiz) {
-            startQuiz(currentDay);
-            return null;
-          }
+        if (currentDayData && currentDayData.quiz) {
+          startQuiz(currentDayData);
+          return null;
         }
       },
-      "Continue Learning": {
-        text: "Perfect! Let's continue with Market Orders. You were learning about Stop Loss Orders. Here's a quick recap: A stop loss order automatically sells your stock when it reaches a certain price to limit losses. Ready to learn about Limit Orders?",
-        options: ["Yes, let's continue", "I need a recap", "Show me examples"]
+      "Continue Learning": () => {
+        if (currentTrack && currentDayData) {
+          startDayContent(currentDayData);
+          return null;
+        }
+        return {
+          id: Date.now(),
+          text: "Let me help you continue your learning journey. Which track would you like to work on?",
+          sender: 'ai',
+          timestamp: new Date().toISOString(),
+          options: ["Show my tracks", "Start new track", "Quick topics"]
+        };
       },
-      "Review Previous Day": {
-        text: "Great idea! Yesterday we covered Stock Exchanges and Market Participants. Here's a quick 2-minute summary: Stock exchanges are marketplaces where stocks are bought and sold, with key players including retail investors, institutional investors, and market makers. Feeling refreshed?",
-        options: ["Yes, continue today's lesson", "I need more review", "Take a quiz"]
+      "Continue to next day": () => {
+        if (currentTrack && currentTrack.currentDay <= currentTrack.totalDays) {
+          const nextDay = currentTrack.days.find(day => day.dayNumber === currentTrack.currentDay);
+          if (nextDay) {
+            setCurrentDayData(nextDay);
+            return {
+              id: Date.now(),
+              text: `🚀 **Day ${nextDay.dayNumber}: ${nextDay.topic}**
+
+Ready to continue your learning journey? Let's dive into today's topic!`,
+              sender: 'ai',
+              timestamp: new Date().toISOString(),
+              options: ['Start Learning', 'Tell me what we\'ll cover', 'Review previous day']
+            };
+          }
+        }
+        return {
+          id: Date.now(),
+          text: "🎉 Congratulations! You've completed this entire track! Ready to start a new one?",
+          sender: 'ai',
+          timestamp: new Date().toISOString(),
+          options: ['Browse new tracks', 'View my achievements', 'Take a break']
+        };
       },
-      "Switch Topics": {
-        text: "No problem! I'll save your current progress. What interests you today? You could explore Cryptocurrency Trading, Risk Management, or start a completely new topic. What sounds interesting?",
-        options: ["Cryptocurrency Trading", "Risk Management", "Portfolio Management", "Surprise me!"]
+      "Retake quiz": () => {
+        if (currentDayData && currentDayData.quiz) {
+          // Reset quiz state
+          setQuizState('none');
+          setQuizAnswers([]);
+          setCurrentQuestionIndex(0);
+          
+          setTimeout(() => startQuiz(currentDayData), 500);
+          return {
+            id: Date.now(),
+            text: "No problem! Let's try the quiz again. Take your time and think through each question carefully.",
+            sender: 'ai',
+            timestamp: new Date().toISOString()
+          };
+        }
       },
-      "Take Quiz": {
-        text: "Excellent! Let's test your knowledge of Stock Exchanges. Question 1: What is the primary function of a stock exchange? A) To set stock prices B) To provide a marketplace for trading C) To give investment advice D) To guarantee profits",
-        options: ["A", "B", "C", "D"]
+      "Review content": () => {
+        if (currentDayData) {
+          startDayContent(currentDayData);
+          return null;
+        }
       },
-      "Continue to next day": {
-        text: "Excellent progress! You're building a strong foundation in investment knowledge. Your next lesson will be available tomorrow, or you can continue with another track if you'd like!",
-        options: ["View available tracks", "Check my progress", "End session"]
+      "Explain this more": () => {
+        if (currentDayData) {
+          return {
+            id: Date.now(),
+            text: `Let me break down "${currentDayData.topic}" in more detail:
+
+${currentDayData.content}
+
+**Key Points:**
+- This concept is essential for understanding financial markets
+- It builds upon previous lessons in your track
+- You'll use this knowledge in practical scenarios
+
+What specific aspect would you like me to explain further?`,
+            sender: 'ai',
+            timestamp: new Date().toISOString(),
+            options: ['Give practical examples', 'How does this apply in real life?', 'I\'m ready for the quiz', 'Ask another question']
+          };
+        }
       }
     };
 
@@ -453,19 +595,19 @@ Your progress has been saved and you can now move to the next day!`
       const topic = userInput.replace("I want to learn about ", "");
       return {
         id: Date.now(),
-        text: `Great choice! Let me explain ${topic} in simple terms. ${topic} is an important concept in finance. Would you like me to start with the basics or dive into more advanced concepts?`,
+        text: `Great choice! ${topic} is a fascinating area of finance. I can help you understand this topic step by step. Would you like a quick overview or shall we dive deep into the fundamentals?`,
         sender: 'ai',
         timestamp: new Date().toISOString(),
-        options: ["Start with basics", "Advanced concepts", "Show examples", "Related topics"]
+        options: ["Quick overview", "Deep dive", "Show me examples", "Related topics"]
       };
     }
 
     return {
       id: Date.now(),
-      text: "I'm here to help you learn! You can ask me about any topic, start a new learning track, or continue where you left off. What would you like to explore?",
+      text: "I'm here to help you learn! You can ask me about any financial topic, continue your current track, or start something new. What interests you today?",
       sender: 'ai',
       timestamp: new Date().toISOString(),
-      options: ["Start new track", "Continue learning", "Ask a question"]
+      options: ["Start new track", "Continue learning", "Ask a question", "Show my progress"]
     };
   };
 
@@ -481,18 +623,26 @@ Your progress has been saved and you can now move to the next day!`
     setCurrentTrack(track);
     setLearningState('learning');
     
-    const currentDay = track.days.find(day => day.dayNumber === track.currentDay);
+    // Find current day data
+    const currentDay = track.days?.find(day => day.dayNumber === track.currentDay) || {
+      dayNumber: track.currentDay,
+      topic: `Day ${track.currentDay} Topic`,
+      content: "Continue your learning journey...",
+      completed: false
+    };
+    
+    setCurrentDayData(currentDay);
     
     const continueMessage = {
       id: Date.now(),
       text: `Welcome back to "${track.title}"! 
 
-You're on Day ${track.currentDay} of ${track.totalDays}. Today's topic: **${currentDay?.topic || 'Continue Learning'}**
+You're on Day ${track.currentDay} of ${track.totalDays}. Today's topic: **${currentDay.topic}**
 
-${currentDay?.completed ? 'You\'ve completed this day. Would you like to review or move to the next day?' : 'Ready to continue where you left off?'}`,
+${currentDay.completed ? 'You\'ve completed this day. Would you like to review or move to the next day?' : 'Ready to continue where you left off?'}`,
       sender: 'ai',
       timestamp: new Date().toISOString(),
-      options: currentDay?.completed 
+      options: currentDay.completed 
         ? ['Move to next day', 'Review this day', 'Take quiz again']
         : ['Continue learning', 'Review content', 'Start quiz']
     };
@@ -501,8 +651,45 @@ ${currentDay?.completed ? 'You\'ve completed this day. Would you like to review 
     setIsChatOpen(true);
   };
 
+  const navItems = [
+  { name: "Overview", link: "#overview" },
+  { name: "Learn Daily", link: "/daily-learn" },
+  { name: "Smart OCR", link: "#ocr" },
+  { name: "FinCalcy Tools", link: "#tools" },
+];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+        console.log("hey:",currentScrollY)
+      if (currentScrollY <= 0) {
+        setShowButton(false);
+      } else {
+        setShowButton(false);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 p-4">
+      <Navbar>
+                <NavBody>
+                  {/* <NavbarLogo show={showButton}/> */}
+                  <NavItems items={navItems} />
+                  {showButton && (
+                    <NavbarButton href="#chatbot" variant="gradient">
+                      💬 Ask FinBot Anything
+                    </NavbarButton>
+                  )}
+                </NavBody>
+              </Navbar>
+            
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -522,7 +709,6 @@ ${currentDay?.completed ? 'You\'ve completed this day. Would you like to review 
           
           {/* Current Progress Card */}
           <CurrentProgressCarousel 
-            setIsChatOpen={setIsChatOpen} 
             tracks={tracks}
             setTracks={setTracks}
             onContinueTrack={continueExistingTrack}
@@ -554,7 +740,6 @@ ${currentDay?.completed ? 'You\'ve completed this day. Would you like to review 
         </div>
       </div>
 
-          
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
           <div className="bg-gray-900 text-white px-6 py-4 rounded-xl shadow-lg flex items-center space-x-3">
@@ -585,7 +770,7 @@ ${currentDay?.completed ? 'You\'ve completed this day. Would you like to review 
               <Brain className="w-5 h-5 mr-2" />
               <span className="font-medium">FinBot - AI Tutor</span>
               {learningState !== 'idle' && (
-                <span className="ml-2 text-xs  bg-opacity-20 px-2 py-1 rounded-full">
+                <span className="ml-2 text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">
                   {learningState === 'learning' && 'Learning'}
                   {learningState === 'quiz' && 'Quiz Mode'}
                   {learningState === 'completed' && 'Completed'}
@@ -601,7 +786,7 @@ ${currentDay?.completed ? 'You\'ve completed this day. Would you like to review 
           </div>
 
           {/* Progress indicator for quiz */}
-          {quizState === 'active' && (
+          {quizState === 'active' && currentQuiz && (
             <div className="bg-gray-700 p-2">
               <div className="flex items-center justify-between text-sm text-gray-300">
                 <span>Quiz Progress</span>
@@ -626,16 +811,16 @@ ${currentDay?.completed ? 'You\'ve completed this day. Would you like to review 
                     : 'bg-gray-700 text-gray-100 shadow-lg'
                 }`}>
                   <div className="text-sm whitespace-pre-wrap">{message.text}</div>
-                  {message.options && (
+                  {message.options && message.options.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {message.options.map((option, index) => (
                         <button
                           key={index}
                           onClick={() => handleOptionClick(option)}
-                          className={`block w-full text-left text-xs rounded px-2 py-1 transition-colors ${
+                          className={`block w-full text-left text-xs rounded px-3 py-2 transition-colors ${
                             message.isQuiz 
-                              ? 'bg-blue-600 bg-opacity-20 hover:bg-opacity-40 border border-blue-400'
-                              : 'bg-white bg-opacity-10 hover:bg-opacity-20'
+                              ? 'bg-blue-600 bg-opacity-20 hover:bg-opacity-40 border border-blue-400 hover:border-blue-300'
+                              : 'bg-gray-600 bg-opacity-30 hover:bg-opacity-50 text-gray-200 hover:text-white'
                           }`}
                         >
                           {option}
@@ -686,7 +871,6 @@ ${currentDay?.completed ? 'You\'ve completed this day. Would you like to review 
     </div>
   );
 }
-
 export function LearningTracks({ startLearningTrack }) {
   const [displayedTracks, setDisplayedTracks] = useState(() => getRandomTracks(learningTracks, 3));
   const [showModal, setShowModal] = useState(false);
