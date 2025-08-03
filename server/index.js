@@ -3,6 +3,7 @@ import connectDB from './db.js';
 import dotenv from 'dotenv';
 import userRouter from './Routes/UserRouter.js';
 import cors from "cors"
+import OcrRouter from './Routes/OcrRouter.js';
 dotenv.config();
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 connectDB();
 
 app.use('/user',userRouter);
+app.use('/ocr', OcrRouter);
 
 app.get('/', (req, res) => {
   res.send('🚀 Server is running and DB is connected!');
