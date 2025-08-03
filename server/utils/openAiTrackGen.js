@@ -1,17 +1,43 @@
 // utils/openaiTrackGen.js
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "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" });
 
 export async function getAITrack(interest, difficulty) {
   const systemPrompt = `
-  You are an expert finance educator. Generate 3 ${difficulty} 7-day learning track on "${interest}".
-  Each day must include:
-  - A topic title
-  - A 3-5 sentence content lesson
-  - A short quiz with 2 MCQs
-  Respond in JSON format with: title, description, difficulty, tracks:[ days: [{ dayNumber, topic, content, quiz }]
-  `;
+You are an expert finance educator. Generate a ${difficulty}-level 7-day learning track on "${interest}".
+Each day must include:
+- dayNumber (1–7)
+- topic title
+- a 3-5 sentence content lesson
+- a short quiz with exactly 2 MCQs (each MCQ should have 4 options and 1 correct answer)
+
+Respond ONLY in strict JSON format:
+{
+  "title": "...",
+  "description": "...",
+  "difficulty": "...",
+  "days": [
+    {
+      "dayNumber": 1,
+      "topic": "...",
+      "content": "...",
+      "quiz": {
+        "questions": [
+          {
+            "question": "...",
+            "options": ["...", "...", "...", "..."],
+            "answer": "..."
+          },
+          ...
+        ]
+      }
+    },
+    ...
+  ]
+}
+`;
+
 
   const completion = await openai.chat.completions.create({
     messages: [
@@ -26,3 +52,5 @@ export async function getAITrack(interest, difficulty) {
   console.log("here",parsed)
   return parsed;
 }
+
+getAITrack("investment","hard")

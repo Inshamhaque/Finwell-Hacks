@@ -7,6 +7,7 @@ export async function genTrack(req,res){
     const { userId } = req.user
     try{
     const aiTrack = await getAITrack(topic, level);
+    console.log(aiTrack.days)
 
     // save into db as well 
     const newTrack = new Track({
@@ -14,7 +15,7 @@ export async function genTrack(req,res){
       title: aiTrack.title,
       description: aiTrack.description,
       difficulty: aiTrack.difficulty,
-      totalDays: aiTrack.tracks.length,
+      totalDays: aiTrack.days.length,
       days: aiTrack.days,
     });
 
@@ -39,7 +40,7 @@ export async function getTracks(req,res){
     try{
         const tracks = await Track.find({
             userId
-        })
+        }).populate("days");
         console.log(tracks);
         return res.json({
             tracks,

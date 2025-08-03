@@ -216,39 +216,7 @@ export default function DailyLearn() {
           </div>
           
           {/* Current Progress Card */}
-          {userData.currentTrack && (
-            <div className="bg-gray-800 rounded-xl shadow-2xl p-6 border-l-4 border-blue-400 backdrop-blur-sm bg-opacity-80">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-semibold text-white">Continue Your Journey</h3>
-                  <p className="text-gray-300">{userData.currentTrack} - {userData.currentTopic}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-blue-400">{userData.dayProgress}%</div>
-                  <div className="text-sm text-gray-400">Day {userData.currentDay} Progress</div>
-                </div>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
-                <div 
-                  className="bg-gradient-to-r from-blue-500 to-cyan-400 h-2 rounded-full transition-all duration-300" 
-                  style={{ width: `${userData.dayProgress}%` }}
-                ></div>
-              </div>
-              <div className="flex space-x-3">
-                <button 
-                  onClick={() => setIsChatOpen(true)}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 flex items-center transform hover:scale-105"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Continue Learning
-                </button>
-                <button className="bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center">
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Review Day {userData.currentDay - 1}
-                </button>
-              </div>
-            </div>
-          )}
+          < CurrentProgressCarousel setIsChatOpen={setIsChatOpen} />
         </div>
 
         {/* Learning Tracks */}
@@ -529,4 +497,84 @@ export function LearningTracks() {
   </div>
 );
 
+}
+
+
+export function CurrentProgressCarousel({ setIsChatOpen }) {
+  const [tracks, setTracks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  const fetchTracks = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/daily-learn/allTracks",{
+        headers : {
+          Authorization : `Bearer ${token} `
+        }
+      });
+      if (response.data?.tracks) {
+        setTracks(response.data.tracks);
+      }
+    } catch (err) {
+      console.error("Error fetching tracks:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchTracks();
+}, []);
+
+  if (loading) return <div className="text-white">Loading your progress...</div>;
+  if (!tracks.length) return null;
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-xl font-bold text-white mb-4">Your Ongoing Modules</h2>
+      <div className="flex space-x-6 overflow-x-auto scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-800 pb-2">
+        {tracks.map((track) => {
+          const progress = Math.floor((track.currentDay / track.totalDays) * 100);
+
+          return (
+            <div
+              key={track._id}
+              className="min-w-[320px] bg-gray-800 rounded-xl shadow-2xl p-6 border-l-4 border-blue-400 backdrop-blur-sm bg-opacity-80 flex-shrink-0"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-white">Continue Your Journey</h3>
+                  <p className="text-gray-300">{track.title}</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-blue-400">{progress}%</div>
+                  <div className="text-sm text-gray-400">Day {track.currentDay} Progress</div>
+                </div>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-cyan-400 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setIsChatOpen(true)}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 flex items-center transform hover:scale-105"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Continue Learning
+                </button>
+                <button
+                  className="bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Review Day {track.currentDay - 1}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
