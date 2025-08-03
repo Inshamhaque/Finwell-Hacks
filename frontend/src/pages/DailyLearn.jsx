@@ -1,5 +1,79 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, BookOpen, TrendingUp, Brain, Award, Play, ChevronRight, RotateCcw, Zap, Clock, Target } from 'lucide-react';
+import { MessageCircle, X, Send, BookOpen,Calendar, BarChart3,Gem,Coins, TrendingUp, Brain, Award, Play, ChevronRight, RotateCcw, Zap, Clock, Target } from 'lucide-react';
+import axios from "axios"
+const BACKEND_URL = "http://localhost:3000"
+const token = localStorage.getItem("token")
+const learningTracks = [
+  {
+    id: 1,
+    title: "Stock Market Fundamentals",
+    description: "Master the basics of stock trading and investment",
+    duration: "7 days",
+    difficulty: "Beginner",
+    icon: TrendingUp,
+    color: "bg-blue-500"
+  },
+  {
+    id: 2,
+    title: "Cryptocurrency Trading",
+    description: "Learn digital asset trading strategies",
+    duration: "10 days",
+    difficulty: "Intermediate",
+    icon: Brain,
+    color: "bg-purple-500"
+  },
+  {
+    id: 3,
+    title: "Risk Management",
+    description: "Protect your investments with proper risk strategies",
+    duration: "5 days",
+    difficulty: "Intermediate",
+    icon: Award,
+    color: "bg-green-500"
+  },
+  {
+    id: 4,
+    title: "Financial Planning & Budgeting",
+    description: "Build a solid financial plan and learn how to manage a budget effectively",
+    duration: "7 days",
+    difficulty: "Beginner",
+    icon: Calendar,
+    color: "bg-yellow-500"
+  },
+  {
+    id: 5,
+    title: "Technical Analysis for Traders",
+    description: "Understand charts, indicators, and patterns to forecast price movements",
+    duration: "8 days",
+    difficulty: "Advanced",
+    icon: BarChart3,
+    color: "bg-red-500"
+  },
+  {
+    id: 6,
+    title: "Value Investing Like Warren Buffett",
+    description: "Learn principles of long-term investing in undervalued companies",
+    duration: "6 days",
+    difficulty: "Intermediate",
+    icon: Gem,
+    color: "bg-emerald-600"
+  },
+  {
+    id: 7,
+    title: "Building Passive Income Streams",
+    description: "Explore financial tools and strategies to earn income with minimal effort",
+    duration: "7 days",
+    difficulty: "Beginner",
+    icon: Coins,
+    color: "bg-amber-600"
+  }
+];
+
+function getRandomTracks(arr, count) {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
 
 export default function DailyLearn() {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -24,38 +98,9 @@ export default function DailyLearn() {
     nextTopic: "Technical Analysis"
   });
 
-  const learningTracks = [
-    {
-      id: 1,
-      title: "Stock Market Fundamentals",
-      description: "Master the basics of stock trading and investment",
-      duration: "7 days",
-      difficulty: "Beginner",
-      icon: TrendingUp,
-      progress: 65,
-      color: "bg-blue-500"
-    },
-    {
-      id: 2,
-      title: "Cryptocurrency Trading",
-      description: "Learn digital asset trading strategies",
-      duration: "10 days",
-      difficulty: "Intermediate",
-      icon: Brain,
-      progress: 0,
-      color: "bg-purple-500"
-    },
-    {
-      id: 3,
-      title: "Risk Management",
-      description: "Protect your investments with proper risk strategies",
-      duration: "5 days",
-      difficulty: "Intermediate",
-      icon: Award,
-      progress: 0,
-      color: "bg-green-500"
-    }
-  ];
+  
+
+
 
   const quickTopics = [
     "Options Trading", "Technical Analysis", "Market Psychology", 
@@ -63,7 +108,6 @@ export default function DailyLearn() {
   ];
 
   useEffect(() => {
-    // Initialize chat with welcome message for returning users
     if (userData.lastActive === "yesterday") {
       const welcomeMessage = {
         id: 1,
@@ -208,46 +252,8 @@ export default function DailyLearn() {
         </div>
 
         {/* Learning Tracks */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6">Learning Tracks</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {learningTracks.map((track) => {
-              const IconComponent = track.icon;
-              return (
-                <div key={track.id} className="bg-gray-800 rounded-xl shadow-2xl overflow-hidden hover:shadow-blue-500/20 hover:shadow-2xl transition-all duration-300 cursor-pointer group backdrop-blur-sm bg-opacity-80" onClick={() => startLearningTrack(track)}>
-                  <div className={`${track.color} h-2`}></div>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`${track.color} p-3 rounded-lg`}>
-                        <IconComponent className="w-6 h-6 text-white" />
-                      </div>
-                      <span className="text-sm bg-gray-700 text-gray-300 px-2 py-1 rounded-full">
-                        {track.difficulty}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors">
-                      {track.title}
-                    </h3>
-                    <p className="text-gray-300 text-sm mb-4">{track.description}</p>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-gray-400 flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {track.duration}
-                      </span>
-                      <span className="text-sm font-medium text-gray-300">{track.progress}% Complete</span>
-                    </div>
-                    <div className="w-full bg-gray-700 rounded-full h-2">
-                      <div 
-                        className={`${track.color} h-2 rounded-full transition-all duration-300 shadow-lg`} 
-                        style={{ width: `${track.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <LearningTracks />
+        
 
         {/* Quick Topics */}
         <div className="mb-8">
@@ -361,4 +367,166 @@ export default function DailyLearn() {
       )}
     </div>
   );
+}
+
+export function LearningTracks() {
+  const [displayedTracks, setDisplayedTracks] = useState(() => getRandomTracks(learningTracks, 3));
+
+  const shuffleTracks = () => {
+    setDisplayedTracks(getRandomTracks(learningTracks, 3));
+  };
+  const [showModal,setShowModal] = useState(false)
+  const [customName,setCustomName] = useState("");
+  const [customLevel,setCustomLevel] = useState("")
+  const [loading,setLoading] = useState(false)
+
+  const startLearningTrack = (track) => {
+    // trigger the chatbot with the chosen track respnonse
+    
+  };
+
+  const handleGenerateCustomTrack = async()=>{
+    setShowModal(false)
+    setLoading(true);
+    const response = await axios.post(`${BACKEND_URL}/daily-learn/randomTracks`,{
+      level:customLevel,
+      topic:customName
+    },{
+      headers : {
+        Authorization : `Bearer ${token}`
+      }
+    })
+    setLoading(false)
+    // response.data.tracks contains the information 
+    
+  }
+
+  return (
+  <div className="mb-8">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-2xl font-bold text-white">Learning Tracks</h2>
+      <div className="space-x-4">
+        <button
+          onClick={shuffleTracks}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Shuffle Tracks
+        </button>
+        <button
+          onClick={() => {
+            setShowModal(true);
+          }}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        >
+          Generate Your Custom Module
+        </button>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {displayedTracks.map((track) => {
+        const IconComponent = track.icon;
+        return (
+          <div
+            key={track.id}
+            className="bg-gray-800 rounded-xl shadow-2xl overflow-hidden hover:shadow-blue-500/20 hover:shadow-2xl transition-all duration-300 cursor-pointer group backdrop-blur-sm bg-opacity-80"
+            onClick={() => startLearningTrack(track)}
+          >
+            <div className={`${track.color} h-2`}></div>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`${track.color} p-3 rounded-lg`}>
+                  <IconComponent className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-sm bg-gray-700 text-gray-300 px-2 py-1 rounded-full">
+                  {track.difficulty}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors">
+                {track.title}
+              </h3>
+              <p className="text-gray-300 text-sm mb-4">{track.description}</p>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-gray-400 flex items-center">
+                  <Clock className="w-4 h-4 mr-1" />
+                  {track.duration}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    {loading && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+    <div className="bg-gray-900 text-white px-6 py-4 rounded-xl shadow-lg flex items-center space-x-3">
+      <svg
+        className="w-6 h-6 animate-spin text-blue-500"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        ></circle>
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v8H4z"
+        ></path>
+      </svg>
+      <span className="text-lg font-medium">Generating your track...</span>
+    </div>
+  </div>
+)}
+
+
+    {showModal && (
+      <div className="fixed inset-0 flex items-center justify-center backdrop-blur  bg-opacity-50 z-50">
+        <div className="bg-gray-900 p-6 rounded-xl w-96 shadow-xl">
+          <h3 className="text-white text-xl font-semibold mb-4">
+            Generate Custom Track
+          </h3>
+          <input
+            type="text"
+            placeholder="Module Name"
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+            className="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-white placeholder-gray-400 outline-none"
+          />
+          <select
+            value={customLevel}
+            onChange={(e) => setCustomLevel(e.target.value)}
+            className="w-full mb-4 px-4 py-2 rounded bg-gray-800 text-white outline-none"
+          >
+            <option value="">Select Difficulty</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setShowModal(false)}
+              className="text-gray-300 hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleGenerateCustomTrack}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg"
+            >
+              Generate Track
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+);
+
 }
