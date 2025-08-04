@@ -15,6 +15,7 @@ const DaySchema = new mongoose.Schema({
   },
   completed: { type: Boolean, default: false },
   userSummary: { type: String, default: "" },
+  score:{ type:Number,default:0 }
 });
 
 const TrackSchema = new mongoose.Schema({
@@ -24,7 +25,7 @@ const TrackSchema = new mongoose.Schema({
   difficulty: String,
   totalDays: Number,
   days: [DaySchema],
-  currentDay: { type: Number, default: 1 },
+  currentDay: { type: Number, default: 0 },
   isCompleted: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });

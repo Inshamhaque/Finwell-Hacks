@@ -35,6 +35,8 @@ export async function genTrack(req,res){
     }
 }
 
+
+
 export async function getTracks(req,res){
     const { userId } = req.user;
     try{
@@ -84,7 +86,7 @@ export async function saveTrack(req, res) {
 }
 
 export async function completeDay(req, res) {
-  const { trackId, dayNumber, summary } = req.body;
+  const { trackId, dayNumber, summary, score } = req.body;
   const track = await Track.findById(trackId);
 
   const day = track.days.find(d => d.dayNumber === dayNumber);
@@ -92,6 +94,7 @@ export async function completeDay(req, res) {
 
   day.completed = true;
   day.userSummary = summary;
+  day.score = score
   if (track.currentDay === dayNumber) track.currentDay += 1;
   if (track.currentDay > track.totalDays) track.isCompleted = true;
 
