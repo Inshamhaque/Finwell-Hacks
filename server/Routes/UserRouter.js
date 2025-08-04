@@ -4,6 +4,7 @@ import { verifyToken } from "../Middleware/auth.js";
 import { generateToken } from "../Middleware/auth.js";
 import { getAll } from "../controllers/user.controller.js";
 import User from "../models/User.js";
+import bcrypt from "bcrypt";
 const userRouter = express.Router();
 
 userRouter.post("/submit", async (req, res) => {
@@ -45,7 +46,8 @@ userRouter.post("/submit", async (req, res) => {
     const newUser = new User({
       name,
       email,
-      password: googleId ? undefined : password,
+      password: googleId ? undefined : await bcrypt.hash(password, 10),
+
       googleId: googleId || undefined,
       authProvider: googleId ? "google" : "local",
       access_token: accessToken,
@@ -78,8 +80,11 @@ userRouter.post("/signin", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.authProvider === "local" && user.password !== password) {
-      return res.status(401).json({ message: "Invalid password" });
+    if (user.authProvider === "local") {
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid password" });
+      }
     }
 
     const token = generateToken(user._id);

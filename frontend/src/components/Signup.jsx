@@ -1,27 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import toast from 'react-hot-toast';
-import StepOne from './StepOne';
-import StepTwo from './StepTwo';
-import StepThree from './StepThree';
-import { BACKEND_URL } from '../utils/db';
+// Signup.jsx
+import React, { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
+import StepOne from "./StepOne";
+import StepTwo from "./StepTwo";
+import StepThree from "./StepThree";
+import { BACKEND_URL } from "../utils/db";
 
-const steps = ['Basic Info', 'Preferences', 'Choose Account'];
+const steps = ["Basic Info", "Preferences", "Choose Account"];
 
 const Signup = () => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    budgetPerMonth: '',
-    investmentSkill: '',
+    name: "",
+    email: "",
+    password: "",
+    budgetPerMonth: "",
+    investmentSkill: "",
   });
   const [prefilled, setPrefilled] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [userAccounts, setUserAccounts] = useState([]);
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState("");
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -34,13 +35,14 @@ const Signup = () => {
   };
 
   useEffect(() => {
-    const startStep = parseInt(searchParams.get('startStep') || '1', 10);
-    const storedToken = localStorage.getItem('token');
+    const startStep = parseInt(searchParams.get("startStep") || "1", 10);
+    const storedToken = localStorage.getItem("token");
     if (startStep === 3 && storedToken) {
       setStep(3);
       setToken(storedToken);
       fetchProfileAndPrefill(storedToken);
     }
+    // eslint-disable-next-line
   }, []);
 
   const fetchProfileAndPrefill = async (jwt) => {
@@ -52,38 +54,38 @@ const Signup = () => {
       const { user } = res.data;
 
       setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        password: '',
-        budgetPerMonth: user.budgetPerMonth || '',
-        investmentSkill: user.investmentSkill || '',
+        name: user.name || "",
+        email: user.email || "",
+        password: "",
+        budgetPerMonth: user.budgetPerMonth || "",
+        investmentSkill: user.investmentSkill || "",
       });
       setUserAccounts(user.accounts || []);
       setPrefilled(true);
     } catch (err) {
-      console.error('Failed to fetch profile:', err);
-      toast.error('Session expired or failed to load account. Please signin again.');
-      navigate('/signin');
+      console.error("Failed to fetch profile:", err);
+      toast.error("Session expired or failed to load account. Please signin again.");
+      navigate("/signin");
     } finally {
       setLoadingProfile(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-900 to-black px-4 py-10">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#111827] px-4 py-10">
       <div className="w-full max-w-2xl">
         {/* Progress Bar */}
         <div className="mb-8">
-          <div className="flex justify-between mb-1 text-sm text-gray-300">
+          <div className="flex justify-between mb-2 text-sm">
             {steps.map((label, idx) => (
               <div key={label} className="flex-1 text-center">
                 <div
-                  className={`inline-block px-3 py-1 rounded-full ${
+                  className={`inline-block px-4 py-2 rounded-full text-xs font-medium ${
                     step === idx + 1
-                      ? 'bg-indigo-500 text-white font-semibold'
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
                       : idx + 1 < step
-                      ? 'bg-green-500 text-white'
-                      : 'bg-slate-700 text-gray-400'
+                      ? "bg-green-500 text-white"
+                      : "bg-[#1f2e50] text-gray-400"
                   }`}
                 >
                   {label}
@@ -91,10 +93,12 @@ const Signup = () => {
               </div>
             ))}
           </div>
-          <div className="h-1 relative bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-1 relative bg-[#1b2746] rounded-full overflow-hidden">
             <div
               className="h-full bg-indigo-500 transition-all duration-500"
-              style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
+              style={{
+                width: `${((step - 1) / (steps.length - 1)) * 100}%`,
+              }}
             />
           </div>
         </div>
