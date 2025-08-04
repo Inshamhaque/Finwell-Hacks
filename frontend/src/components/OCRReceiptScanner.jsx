@@ -95,6 +95,10 @@ const OCRReceiptScanner = () => {
 
     try {
       const token = localStorage.getItem("token");
+      const selectedAccountId = localStorage.setItem("selectedAccountId")
+      if(!selectedAccountId){
+        setError("account not selected");
+      }
       if (!token) {
         setError("Not authenticated.");
         return;
@@ -104,7 +108,7 @@ const OCRReceiptScanner = () => {
         "http://localhost:3000/user/transaction",
         {
           // "5bc0b1bf-fb4b-41af-a683-d869cbdadb61"
-          fromAccountId:finalTx.fromAccountId,
+          fromAccountId:selectedAccountId,
           category: finalTx.category,
           date: finalTx.date,
           amount: finalTx.amount,
@@ -118,11 +122,6 @@ const OCRReceiptScanner = () => {
       
 
       console.log("Transaction added:", res.data);
-
-      // Callback to parent
-      // onTransactionExtracted(finalTx);
-
-      // Reset state
       setTransaction(null);
       setSelectedFile(null);
       setCategoryOverride("");

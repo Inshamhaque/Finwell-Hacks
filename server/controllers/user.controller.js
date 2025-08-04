@@ -14,6 +14,7 @@ export async function getAll(req,res){
         res.json({
             message : "fetched",
             result,
+            userData,
             status : 200
         })
     }
