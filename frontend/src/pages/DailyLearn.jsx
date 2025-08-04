@@ -8,7 +8,7 @@ import { BACKEND_URL } from '../config';
 const token = localStorage.getItem("token");
 
 // OpenAI API configuration
-const OPENAI_API_KEY = import.meta.OPENAI_API_KEY 
+const OPENAI_API_KEY = import.meta.VITE_OPENAI_API_KEY 
 const learningTracks = [
   {
     id: 1,
@@ -234,6 +234,7 @@ export default function DailyLearn() {
       toast.success("Track generated Successfully")
       
       setLoading(false);
+      window.location.reload(true);
       
       const welcomeMessage = {
         id: Date.now(),
@@ -595,8 +596,8 @@ export default function DailyLearn() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800">
-      <Navbar className='bg-black px-3 py-2 mb-5'>
+    <div className="min-h-screen bg-gradient-to-br overflow-hidden from-gray-900 via-slate-900 to-gray-800">
+      <Navbar className='bg-black px-3  mb-2'>
         <NavBody>
           <NavbarLogo show={showButton} />
           <NavItems items={navItems} />
