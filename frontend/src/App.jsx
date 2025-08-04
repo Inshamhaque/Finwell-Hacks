@@ -7,6 +7,7 @@ import Signup from './components/Signup'
 import Signin from './components/Signin';
 import Accounts from './components/Accounts';
 import OCRReceiptScanner from './components/OCRReceiptScanner';
+import ChatBot from './components/ChatBot';
 
 const App = () => {
 
@@ -21,6 +22,7 @@ const App = () => {
         <Route path="*" element={<Navigate to="/signin" replace />} />
         <Route path='/accounts' element={<Accounts/>}/>
         <Route path="/ocr" element={<OCRReceiptScanner/>} />
+        <Route path='/chatbot' element={<ChatBot/>}/>
       </Routes>
     
     </BrowserRouter>

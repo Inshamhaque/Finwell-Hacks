@@ -8,6 +8,7 @@ const Accounts = () => {
   const navigate = useNavigate();
 
   const accounts = location.state?.accounts || [];
+  console.log(accounts);
 
   useEffect(() => {
     if (accounts.length >= 0) {
@@ -18,7 +19,8 @@ const Accounts = () => {
   const handleAccountSelect = () => {
     if (!selected) return;
     const selectedAccount = accounts.find((acc) => acc.id === selected);
-    // Redirect to dashboard or next step with selectedAccount
+    console.log(selectedAccount);
+    localStorage.setItem("selectedAccountId",selectedAccount.id)
     navigate("/dashboard", { state: { account: selectedAccount } });
   };
 

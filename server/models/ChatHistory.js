@@ -20,6 +20,9 @@ const chatHistorySchema = new mongoose.Schema({
   messages: {
     type: [messageSchema],
     default: []
+  },
+  fromAccountId:{
+    type:String,
   }
 });
 
