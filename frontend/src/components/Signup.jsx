@@ -1,12 +1,11 @@
-// Signup.jsx
-import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import toast from "react-hot-toast";
-import StepOne from "./StepOne";
-import StepTwo from "./StepTwo";
-import StepThree from "./StepThree";
-import { BACKEND_URL } from "../utils/db";
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import StepOne from './StepOne';
+import StepTwo from './StepTwo';
+import StepThree from './StepThree';
+import { BACKEND_URL } from '../config';
 
 const steps = ["Basic Info", "Preferences", "Choose Account"];
 

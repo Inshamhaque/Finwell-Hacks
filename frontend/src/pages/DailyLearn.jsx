@@ -2,11 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, BookOpen, Calendar, BarChart3, Gem, Coins, TrendingUp, Brain, Award, Play, ChevronRight, RotateCcw, Zap, Clock, Target, CheckCircle2 } from 'lucide-react';
 import axios from "axios";
 import { Navbar, NavbarLogo, NavBody, NavItems, NavbarButton } from '../components/ui/resizable-navbar';
-import { toast,ToastContainer } from "react-toast"
+import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
-
-
-const BACKEND_URL = "http://localhost:3000";
+import { BACKEND_URL } from '../config';
 const token = localStorage.getItem("token");
 
 // OpenAI API configuration
@@ -233,6 +231,7 @@ export default function DailyLearn() {
       setCurrentTrack(track);
       const currentDay = track.days.find(day => day.dayNumber === track.currentDay);
       setCurrentDayData(currentDay);
+      toast.success("Track generated Successfully")
       
       setLoading(false);
       
@@ -576,10 +575,8 @@ export default function DailyLearn() {
   };
 
   const navItems = [
-    { name: "Overview", link: "#overview" },
+    { name: "Overview", link: "/dashboard" },
     { name: "Learn Daily", link: "/daily-learn" },
-    { name: "Smart OCR", link: "#ocr" },
-    { name: "FinCalcy Tools", link: "#tools" },
   ];
 
   useEffect(() => {
@@ -598,9 +595,10 @@ export default function DailyLearn() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 p-4">
-      <Navbar>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800">
+      <Navbar className='bg-black px-3 py-2 mb-5'>
         <NavBody>
+          <NavbarLogo show={showButton} />
           <NavItems items={navItems} />
           {showButton && (
             <NavbarButton href="#chatbot" variant="gradient">
@@ -616,14 +614,7 @@ export default function DailyLearn() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-4xl font-bold text-white">Daily Learn</h1>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center bg-orange-100 px-3 py-1 rounded-full">
-                <Zap className="w-4 h-4 text-orange-500 mr-1" />
-                <span className="text-orange-700 font-medium">{userData.streak} day streak</span>
-              </div>
-              <div className="flex items-center bg-blue-100 px-3 py-1 rounded-full">
-                <Target className="w-4 h-4 text-blue-500 mr-1" />
-                <span className="text-blue-700 font-medium">Day {userData.currentDay}/7</span>
-              </div>
+              
             </div>
           </div>
           
@@ -661,7 +652,7 @@ export default function DailyLearn() {
       </div>
 
       {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center  bg-opacity-60 backdrop-blur-sm">
           <div className="bg-gray-900 text-white px-6 py-4 rounded-xl shadow-lg flex items-center space-x-3">
             <svg className="w-6 h-6 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -991,7 +982,7 @@ export function CurrentProgressCarousel({ setIsChatOpen, tracks, setTracks, onCo
       <h2 className="text-xl font-bold text-white mb-4">Your Ongoing Modules</h2>
       <div className="flex space-x-6 overflow-x-auto scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-800 pb-2">
         {tracks.map((track) => {
-          const progress = Math.floor(((track.currentDay - 1) / track.totalDays) * 100);
+          const progress = Math.floor(((track.currentDay-1) / track.totalDays) * 100);
 
           return (
             <div

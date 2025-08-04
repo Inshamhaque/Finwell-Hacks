@@ -25,6 +25,7 @@ import ChatBot from "./ChatBot";
 import { MessageCircle } from "lucide-react";
 import OCRReceiptScanner from "./OCRReceiptScanner";
 import { FaCamera } from "react-icons/fa";
+import { BACKEND_URL } from "../config";
 
 const SectionCard = ({ title, icon, children, className = "" }) => (
   <div className={`bg-gray-800 p-6 rounded-2xl shadow transition hover:shadow-lg ${className}`}>
@@ -88,21 +89,28 @@ const FinancialDashboard = () => {
       const accountId = localStorage.getItem("selectedAccountId");
 
       try {
-        const res = await axios.post(
-          "http://localhost:3000/user/getAll",
-          { accountId },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        console.log("here")
+        const res = await axios.post(`${BACKEND_URL}/user/getAll`, {
+          accountId
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        });
 
         if (res.data?.result?.length > 0) {
           setAccount(res.data.result[0]);
         }
 
-        const suggestionRes = await axios.post(
-          "http://localhost:3000/stocks/recommendations",
-          { accountId },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        // Fetch AI stock suggestions
+        const suggestionRes = await axios.post(`${BACKEND_URL}/stocks/recommendations`,{
+          accountId
+        },
+           {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        });
 
         const parsed = JSON.parse(
           suggestionRes.data.suggestions.match(/\[.*\]/s)[0]

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
+import { BACKEND_URL } from "../config";
 
 const TRANSACTION_CATEGORIES = [
   "FOOD",
@@ -42,7 +43,8 @@ const OCRReceiptScanner = () => {
     try {
       const fd = new FormData();
       fd.append("receipt", file);
-      const res = await axios.post("http://localhost:3000/ocr", fd, {
+
+      const res = await axios.post(`${BACKEND_URL}/ocr`, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const data = res.data;
@@ -71,8 +73,8 @@ const OCRReceiptScanner = () => {
       if (!selectedAccountId) return setError("Account not selected.");
       if (!token) return setError("Not authenticated.");
 
-      await axios.post(
-        "http://localhost:3000/user/transaction",
+      const res = await axios.post(
+        `${BACKEND_URL}/user/transaction`,
         {
           fromAccountId: selectedAccountId,
           category: finalTx.category,
