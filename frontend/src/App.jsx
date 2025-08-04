@@ -14,15 +14,12 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* <Route path='/auth/signin' element={< Signin />} />/ */}
         <Route path='/dashboard' element={< Dashboard />} />
         <Route path='/daily-learn' element={< DailyLearn />} />
         <Route path="/signup" element={<Signup />} />
        <Route path="/signin" element={<Signin />} />
         <Route path="*" element={<Navigate to="/signin" replace />} />
         <Route path='/accounts' element={<Accounts/>}/>
-        <Route path="/ocr" element={<OCRReceiptScanner/>} />
-        <Route path='/chatbot' element={<ChatBot/>}/>
       </Routes>
     
     </BrowserRouter>

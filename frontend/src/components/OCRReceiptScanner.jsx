@@ -12,18 +12,6 @@ const TRANSACTION_CATEGORIES = [
   "OTHERS",
 ];
 
-/**
- * @typedef {Object} ExtractedTransaction
- * @property {number} amount
- * @property {string} description
- * @property {string} date
- * @property {string} category
- * @property {string} merchant
- *
- * @param {object} props
- * @param {string} props.activeAccountId - The currently selected bank account ID.
- * @param {(tx: ExtractedTransaction) => void} props.onTransactionExtracted - Callback when tx is added.
- */
 const OCRReceiptScanner = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [transaction, setTransaction] = useState(null);
@@ -33,12 +21,8 @@ const OCRReceiptScanner = () => {
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
 
-  // Upload button click
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleUploadClick = () => fileInputRef.current?.click();
 
-  // When file is selected
   const handleFileChange = async (e) => {
     setError("");
     setTransaction(null);
@@ -46,47 +30,35 @@ const OCRReceiptScanner = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("Please upload an image file.");
+      setError("Please upload a valid image file.");
       return;
     }
     setSelectedFile(file);
     await sendToOCRBackend(file);
   };
 
-  // Call backend OCR endpoint
   const sendToOCRBackend = async (file) => {
     setLoading(true);
     try {
       const fd = new FormData();
       fd.append("receipt", file);
-
       const res = await axios.post("http://localhost:3000/ocr", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       const data = res.data;
       setRawResponse(data.raw || "");
-
-      if (data.transaction) {
-        setTransaction(data.transaction);
-      } else {
-        setError("Could not extract structured transaction. Please edit manually.");
-      }
+      data.transaction
+        ? setTransaction(data.transaction)
+        : setError("Could not extract transaction.");
     } catch (err) {
-      console.error("OCR backend failed:", err);
-      setError("Failed to process receipt. Try again.");
+      setError("Failed to process receipt.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Add transaction -> send to backend
   const handleAdd = async () => {
     if (!transaction) return;
-    // if (!activeAccountId) {
-    //   setError("No account selected.");
-    //   return;
-    // }
 
     const finalTx = {
       ...transaction,
@@ -95,20 +67,14 @@ const OCRReceiptScanner = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const selectedAccountId = localStorage.setItem("selectedAccountId")
-      if(!selectedAccountId){
-        setError("account not selected");
-      }
-      if (!token) {
-        setError("Not authenticated.");
-        return;
-      }
+      const selectedAccountId = localStorage.getItem("selectedAccountId");
+      if (!selectedAccountId) return setError("Account not selected.");
+      if (!token) return setError("Not authenticated.");
 
-      const res = await axios.post(
+      await axios.post(
         "http://localhost:3000/user/transaction",
         {
-          // "5bc0b1bf-fb4b-41af-a683-d869cbdadb61"
-          fromAccountId:selectedAccountId,
+          fromAccountId: selectedAccountId,
           category: finalTx.category,
           date: finalTx.date,
           amount: finalTx.amount,
@@ -119,38 +85,30 @@ const OCRReceiptScanner = () => {
         }
       );
 
-      
-
-      console.log("Transaction added:", res.data);
+      // Reset
       setTransaction(null);
       setSelectedFile(null);
       setCategoryOverride("");
       setRawResponse("");
+      setError("");
     } catch (err) {
-      console.error("Failed to add transaction:", err);
       setError("Failed to add transaction.");
     }
   };
 
   return (
-    <div className="w-screen h-screen mx-auto bg-gradient-to-br from-slate-900 via-indigo-900 to-black p-6 shadow-xl text-white space-y-6">
-      <div className="flex justify-between items-start">
-        <div>
-          <h2 className="text-lg font-bold">Receipt OCR via OpenAI</h2>
-          <p className="text-sm text-gray-300 mt-1">
-            Upload a receipt image. We'll extract amount, date, merchant, and category.
-          </p>
-        </div>
-      </div>
-
-      {/* Upload */}
-      <div className="flex gap-3">
+    <div className="text-white text-sm space-y-3 max-h-[75vh] overflow-y-auto">
+      <div className="flex justify-between items-center">
+        <p className="font-semibold text-base">🧾 OCR Receipt Scanner</p>
         <button
           onClick={handleUploadClick}
           disabled={loading}
-          className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-lg py-3 text-sm"
+          className="bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded text-xs"
         >
-          Upload Receipt
+          Upload
+          {loading && (
+            <span className="ml-2 inline-block w-3 h-3 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
+          )}
         </button>
         <input
           ref={fileInputRef}
@@ -161,77 +119,69 @@ const OCRReceiptScanner = () => {
         />
       </div>
 
-      {/* Loading */}
-      {loading && (
-        <div className="text-sm">
-          Processing... please wait. This uses OpenAI Vision & parsing.
-        </div>
-      )}
-
-      {/* Error */}
       {error && (
-        <div className="bg-red-600/30 p-2 rounded text-sm flex gap-2">
-          <span>⚠️</span> <span>{error}</span>
+        <div className="bg-red-600/20 border border-red-500 text-xs rounded p-2">
+          {error}
         </div>
       )}
 
       {/* Preview */}
       {selectedFile && (
-        <div className="flex gap-4 items-center bg-slate-800/30 p-3 rounded">
-          <div className="w-16 h-16 bg-slate-700 rounded overflow-hidden flex-shrink-0">
-            <img
-              src={URL.createObjectURL(selectedFile)}
-              alt="receipt"
-              className="object-cover w-full h-full"
-            />
-          </div>
-          <div>
-            <div className="font-medium">{selectedFile.name}</div>
-            <div className="text-xs text-gray-400">
+        <div className="flex items-center gap-3 bg-gray-800 rounded p-2 border border-gray-700">
+          <img
+            src={URL.createObjectURL(selectedFile)}
+            alt="Receipt"
+            className="w-16 h-16 rounded border border-gray-600 object-cover"
+          />
+          <div className="flex-1 text-xs">
+            <p className="font-medium break-all">{selectedFile.name}</p>
+            <p className="text-gray-400">
               {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-            </div>
+            </p>
           </div>
+          <button
+            onClick={() => {
+              setSelectedFile(null);
+              setTransaction(null);
+              setRawResponse("");
+              setError("");
+              setCategoryOverride("");
+            }}
+            className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded"
+          >
+            Clear
+          </button>
         </div>
       )}
 
-      {/* Transaction fields */}
+      {/* Transaction Form */}
       {transaction && (
-        <div className="bg-white/5 p-4 rounded-lg border border-white/10 space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-xs font-medium mb-1">Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                value={transaction.amount}
-                onChange={(e) =>
-                  setTransaction({
-                    ...transaction,
-                    amount: parseFloat(e.target.value) || 0,
-                  })
-                }
-                className="w-full bg-slate-800 px-3 py-2 rounded border border-gray-600 text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1">Date</label>
-              <input
-                type="date"
-                value={transaction.date}
-                onChange={(e) =>
-                  setTransaction({ ...transaction, date: e.target.value })
-                }
-                className="w-full bg-slate-800 px-3 py-2 rounded border border-gray-600 text-white"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium mb-1">
-              Merchant / Description
-            </label>
+        <div className="bg-gray-800 border border-gray-700 p-3 rounded space-y-3">
+          <p className="text-sm font-medium mb-1">Extracted Transaction</p>
+          <div className="grid grid-cols-1 gap-2">
+            <input
+              type="number"
+              value={transaction.amount}
+              placeholder="Amount"
+              onChange={(e) =>
+                setTransaction({
+                  ...transaction,
+                  amount: parseFloat(e.target.value) || 0,
+                })
+              }
+              className="bg-gray-900 border border-gray-600 px-3 py-1.5 rounded text-sm"
+            />
+            <input
+              type="date"
+              value={transaction.date}
+              onChange={(e) =>
+                setTransaction({ ...transaction, date: e.target.value })
+              }
+              className="bg-gray-900 border border-gray-600 px-3 py-1.5 rounded text-sm"
+            />
             <input
               type="text"
+              placeholder="Description"
               value={transaction.description}
               onChange={(e) =>
                 setTransaction({
@@ -240,37 +190,33 @@ const OCRReceiptScanner = () => {
                   merchant: e.target.value,
                 })
               }
-              className="w-full bg-slate-800 px-3 py-2 rounded border border-gray-600 text-white"
+              className="bg-gray-900 border border-gray-600 px-3 py-1.5 rounded text-sm"
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-medium mb-1">Category</label>
-            <div className="flex gap-2 flex-wrap mb-2">
-              {TRANSACTION_CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategoryOverride(cat)}
-                  className={`text-xs px-3 py-1 rounded-full font-medium border ${
-                    (categoryOverride || transaction.category) === cat
-                      ? "bg-indigo-500 border-indigo-500"
-                      : "border-gray-600"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {TRANSACTION_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategoryOverride(cat)}
+                className={`text-xs px-3 py-1 rounded-full border ${
+                  (categoryOverride || transaction.category) === cat
+                    ? "bg-indigo-500 border-indigo-500 text-white"
+                    : "border-gray-500 text-gray-300 hover:border-white"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
 
-          <div className="flex justify-end">
+          <div className="text-right">
             <button
               onClick={handleAdd}
               disabled={!transaction || transaction.amount <= 0}
-              className="bg-green-500 hover:bg-green-400 px-6 py-2 rounded font-semibold disabled:opacity-50"
+              className="bg-green-500 hover:bg-green-600 px-4 py-1.5 rounded-full text-sm font-semibold"
             >
-              Add Transaction
+              Add
             </button>
           </div>
         </div>
@@ -278,14 +224,27 @@ const OCRReceiptScanner = () => {
 
       {/* Raw output */}
       {rawResponse && (
-        <details className="bg-slate-800/60 p-3 rounded">
-          <summary className="text-xs text-gray-300 cursor-pointer">
-            Raw model output
+        <details className="bg-gray-800 rounded border border-gray-700 p-2 text-xs">
+          <summary className="cursor-pointer text-indigo-400 font-medium">
+            Raw OCR Output
           </summary>
-          <pre className="mt-2 text-xs max-h-48 overflow-auto whitespace-pre-wrap">
+          <pre className="mt-1 text-gray-300 whitespace-pre-wrap max-h-32 overflow-y-auto">
             {rawResponse}
           </pre>
         </details>
+      )}
+
+      {/* Retry option */}
+      {!transaction && selectedFile && !loading && !error && (
+        <div className="bg-gray-800 border border-gray-700 p-2 rounded text-xs flex justify-between items-center">
+          <p className="text-gray-300">Could not extract. Retry?</p>
+          <button
+            onClick={() => sendToOCRBackend(selectedFile)}
+            className="bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-full"
+          >
+            Retry
+          </button>
+        </div>
       )}
     </div>
   );

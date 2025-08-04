@@ -10,27 +10,20 @@ import {
   MobileNavToggle,
   NavbarLogo,
   NavbarButton,
-} from '../components/ui/resizable-navbar';
-
-const navItems = [
-  { name: "Overview", link: "#overview" },
-  { name: "Learn Daily", link: "/daily-learn" },
-  { name: "Smart OCR", link: "/ocr" },
-  { name: "FinCalcy Tools", link: "#tools" },
-];
+} from "../components/ui/resizable-navbar";
+const navItems = [{ name: "Learn Daily", link: "/daily-learn" }];
 
 export default function Dashboard() {
   const [showButton, setShowButton] = useState(true);
   const lastScrollY = useRef(0);
-  const [userData, setUserData] = useState({})
+  const [userData, setUserData] = useState({});
 
   // getting the account data
-  
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-        console.log("hey:",currentScrollY)
+      console.log("hey:", currentScrollY);
       if (currentScrollY <= 0) {
         setShowButton(true);
       } else {
@@ -48,13 +41,8 @@ export default function Dashboard() {
     <div className="bg-black min-h-screen">
       <Navbar>
         <NavBody>
-          <NavbarLogo show={showButton}/>
+          <NavbarLogo show={showButton} />
           <NavItems items={navItems} />
-          {showButton && (
-            <NavbarButton href="/chatbot" variant="gradient">
-              💬 Ask FinBot Anything
-            </NavbarButton>
-          )}
         </NavBody>
       </Navbar>
 

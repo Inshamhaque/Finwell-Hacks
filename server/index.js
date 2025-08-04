@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 import userRouter from './Routes/UserRouter.js';
 import cors from "cors"
 import OcrRouter from './Routes/OcrRouter.js';
-import stockRouter from './routes/stock.routes.js';
-import learnRouter from './routes/Dailylearn.routes.js';
+import stockRouter from './Routes/stock.routes.js';
+import learnRouter from './Routes/Dailylearn.routes.js';
 dotenv.config();
 
 const app = express();
