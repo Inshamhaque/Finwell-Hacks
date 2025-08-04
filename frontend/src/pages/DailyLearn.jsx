@@ -6,8 +6,6 @@ import { Navbar, NavbarLogo, NavBody, NavItems, NavbarButton } from '../componen
 const BACKEND_URL = "http://localhost:3000";
 const token = localStorage.getItem("token"); // In real app, get from localStorage.getItem("token")
 
-// OpenAI API configuration - in real app, this would be in environment variables
-const OPENAI_API_KEY = "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";
 
 const learningTracks = [
   {
