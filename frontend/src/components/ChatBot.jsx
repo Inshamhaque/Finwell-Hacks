@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { BACKEND_URL } from "../config";
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([
@@ -41,7 +42,7 @@ const ChatBot = () => {
       setContextError(null);
       try {
         const res = await axios.post(
-          "http://localhost:3000/user/getAll",
+          `${BACKEND_URL}/user/getAll`,
           { accountId },
           {
             headers: {
