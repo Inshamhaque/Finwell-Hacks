@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 import userRouter from './Routes/UserRouter.js';
 import cors from "cors"
 import OcrRouter from './Routes/OcrRouter.js';
-import stockRouter from './Routes/stock.routes.js';
-// import Chatrouter from './Routes/ChatRoute.js';
+import stockRouter from './routes/stock.routes.js';
+import learnRouter from './routes/Dailylearn.routes.js';
 dotenv.config();
 
 const app = express();
@@ -18,6 +18,7 @@ connectDB();
 app.use('/user',userRouter);
 app.use('/ocr', OcrRouter);
 app.use('/stocks',stockRouter);
+app.use('/daily-learn',learnRouter)
 // app.use('/chat',Chatrouter);
 
 app.get('/', (req, res) => {
