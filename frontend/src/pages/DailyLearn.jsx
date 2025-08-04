@@ -596,8 +596,9 @@ export default function DailyLearn() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800">
-      <Navbar className='bg-black '>
+      <Navbar className='bg-black px-3 py-2 mb-5'>
         <NavBody>
+          <NavbarLogo show={showButton} />
           <NavItems items={navItems} />
           {showButton && (
             <NavbarButton href="#chatbot" variant="gradient">
@@ -613,14 +614,7 @@ export default function DailyLearn() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-4xl font-bold text-white">Daily Learn</h1>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center bg-orange-100 px-3 py-1 rounded-full">
-                <Zap className="w-4 h-4 text-orange-500 mr-1" />
-                <span className="text-orange-700 font-medium">{userData.streak} day streak</span>
-              </div>
-              <div className="flex items-center bg-blue-100 px-3 py-1 rounded-full">
-                <Target className="w-4 h-4 text-blue-500 mr-1" />
-                <span className="text-blue-700 font-medium">Day {userData.currentDay}/7</span>
-              </div>
+              
             </div>
           </div>
           

@@ -25,6 +25,7 @@ import ChatBot from "./ChatBot";
 import { MessageCircle } from "lucide-react";
 import OCRReceiptScanner from "./OCRReceiptScanner";
 import { FaCamera } from "react-icons/fa";
+import { BACKEND_URL } from "../config";
 
 const SectionCard = ({ title, icon, children, className = "" }) => (
   <div className={`bg-gray-800 p-6 rounded-2xl shadow transition hover:shadow-lg ${className}`}>
@@ -88,6 +89,7 @@ const FinancialDashboard = () => {
       const accountId = localStorage.getItem("selectedAccountId");
 
       try {
+        console.log("here")
         const res = await axios.post(`${BACKEND_URL}/user/getAll`, {
           accountId
         }, {
