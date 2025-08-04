@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { FaMoneyBillWave, FaChartPie, FaBell, FaGraduationCap } from 'react-icons/fa';
 import axios from 'axios';
+import { BACKEND_URL } from '../config';
 
 const SectionCard = ({ title, icon, children }) => (
   <div className="bg-gray-800 p-6 rounded-2xl shadow transition hover:shadow-lg">
@@ -26,7 +27,7 @@ const FinancialDashboard = () => {
       const accountId = localStorage.getItem('selectedAccountId');
       
       try {
-        const res = await axios.post('http://localhost:3000/user/getAll', {
+        const res = await axios.post(`${BACKEND_URL}/user/getAll`, {
           accountId
         }, {
           headers: {
@@ -39,7 +40,7 @@ const FinancialDashboard = () => {
         }
 
         // Fetch AI stock suggestions
-        const suggestionRes = await axios.post('http://localhost:3000/stocks/recommendations',{
+        const suggestionRes = await axios.post(`${BACKEND_URL}/stocks/recommendations`,{
           accountId
         },
            {

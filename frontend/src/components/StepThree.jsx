@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { BACKEND_URL } from "../utils/db";
+import { BACKEND_URL } from "../config";
 
 const StepThree = ({
   formData,

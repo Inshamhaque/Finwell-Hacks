@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
+import { BACKEND_URL } from "../config";
 
 const TRANSACTION_CATEGORIES = [
   "FOOD",
@@ -60,7 +61,7 @@ const OCRReceiptScanner = () => {
       const fd = new FormData();
       fd.append("receipt", file);
 
-      const res = await axios.post("http://localhost:3000/ocr", fd, {
+      const res = await axios.post(`${BACKEND_URL}/ocr`, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -105,7 +106,7 @@ const OCRReceiptScanner = () => {
       }
 
       const res = await axios.post(
-        "http://localhost:3000/user/transaction",
+        `${BACKEND_URL}/user/transaction`,
         {
           // "5bc0b1bf-fb4b-41af-a683-d869cbdadb61"
           fromAccountId:selectedAccountId,
