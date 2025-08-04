@@ -1,6 +1,6 @@
 import Track from '../models/DailyLearn.model.js';
 import User from '../models/User.js';
-import { getAITrack } from '../utils/openaiTrackGen.js'; 
+import { getAITrack } from '../utils/openAiTrackGen.js';
 
 export async function genTrack(req,res){
     const { topic,level } = req.body;

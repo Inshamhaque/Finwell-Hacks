@@ -25,7 +25,7 @@ const TrackSchema = new mongoose.Schema({
   difficulty: String,
   totalDays: Number,
   days: [DaySchema],
-  currentDay: { type: Number, default: 0 },
+  currentDay: { type: Number, default: 1 },
   isCompleted: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
