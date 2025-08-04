@@ -991,7 +991,7 @@ export function CurrentProgressCarousel({ setIsChatOpen, tracks, setTracks, onCo
       <h2 className="text-xl font-bold text-white mb-4">Your Ongoing Modules</h2>
       <div className="flex space-x-6 overflow-x-auto scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-800 pb-2">
         {tracks.map((track) => {
-          const progress = Math.floor((track.currentDay / track.totalDays) * 100);
+          const progress = Math.floor((track.currentDay-1 / track.totalDays) * 100);
 
           return (
             <div
