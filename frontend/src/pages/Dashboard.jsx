@@ -15,7 +15,7 @@ import {
 const navItems = [
   { name: "Overview", link: "#overview" },
   { name: "Learn Daily", link: "/daily-learn" },
-  { name: "Smart OCR", link: "#ocr" },
+  { name: "Smart OCR", link: "/ocr" },
   { name: "FinCalcy Tools", link: "#tools" },
 ];
 
@@ -51,7 +51,7 @@ export default function Dashboard() {
           <NavbarLogo show={showButton}/>
           <NavItems items={navItems} />
           {showButton && (
-            <NavbarButton href="#chatbot" variant="gradient">
+            <NavbarButton href="/chatbot" variant="gradient">
               💬 Ask FinBot Anything
             </NavbarButton>
           )}
