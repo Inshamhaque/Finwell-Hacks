@@ -19,10 +19,8 @@ const ChatBot = () => {
   const [contextLoading, setContextLoading] = useState(true);
   const [contextError, setContextError] = useState(null);
   const chatEndRef = useRef(null);
-
   const token = localStorage.getItem("token");
   const accountId = localStorage.getItem("selectedAccountId");
-  const OPENAI_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,7 +34,6 @@ const ChatBot = () => {
     }
 
     const controller = new AbortController();
-
     const fetchContext = async () => {
       setContextLoading(true);
       setContextError(null);
@@ -52,7 +49,6 @@ const ChatBot = () => {
             signal: controller.signal,
           }
         );
-
         const userData = res.data?.userData || {};
         const account = Array.isArray(res.data?.result)
           ? res.data.result[0]
@@ -87,71 +83,65 @@ const ChatBot = () => {
     const txs = (acct.transactions || [])
       .map((t) => `${t.category}: ₹${t.amount} on ${t.date}`)
       .join(", ");
-    return `
-User name: ${userContext.name || "N/A"}
-Monthly Budget: ₹${userContext.budgetPerMonth || "N/A"}
-Account Balance: ₹${acct.balance || "N/A"}
-Recent Transactions: ${txs || "None"}
-    `.trim();
+
+    return {
+      name: userContext.name || "N/A",
+      budgetPerMonth: userContext.budgetPerMonth || "N/A",
+      account: {
+        balance: acct.balance || "N/A",
+        transactions: acct.transactions || []
+      }
+    };
   }, [userContext]);
 
+  // Updated sendMessage function using backend API
   const sendMessage = async () => {
     if (!input.trim() || contextLoading) return;
+
     setLoading(true);
     setMessages((prev) => [...prev, { sender: "user", text: input }]);
     const question = input;
     setInput("");
 
     try {
-      if (!OPENAI_KEY) throw new Error("Missing OpenAI key");
-
-      const systemPrompt = `
-You are FinBot, a helpful financial assistant.
-Use the following user context to inform your answers:
-${buildContext}
-Answer concisely and give actionable suggestions.
-      `.trim();
-
-      const payload = {
-        model: "gpt-4-turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: question },
-        ],
-        temperature: 0.65,
-        max_tokens: 500,
-      };
-
-      const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
+      const response = await axios.post(
+        `${BACKEND_URL}/chatbot/message`,
         {
-          method: "POST",
+          userMessage: question,
+          userContext: buildContext
+        },
+        {
           headers: {
-            Authorization: `Bearer ${OPENAI_KEY}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
+          }
         }
       );
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error("OpenAI API error:", errText);
-        throw new Error("OpenAI error");
+      if (response.data.success) {
+        const botReply = response.data.message || "⚠️ No response received.";
+        setMessages((prev) => [...prev, { sender: "bot", text: botReply }]);
+      } else {
+        throw new Error(response.data.error || "Failed to get response");
       }
-
-      const data = await response.json();
-      const botReply =
-        data?.choices?.[0]?.message?.content || "⚠️ No response from OpenAI.";
-
-      setMessages((prev) => [...prev, { sender: "bot", text: botReply }]);
     } catch (err) {
       console.error("Chat send error:", err);
+      
+      let errorMessage = "❗ Something went wrong while fetching the response.";
+      
+      if (err.response?.status === 401) {
+        errorMessage = "❗ Authentication failed. Please log in again.";
+      } else if (err.response?.status === 429) {
+        errorMessage = "❗ Too many requests. Please wait a moment and try again.";
+      } else if (!navigator.onLine) {
+        errorMessage = "❗ No internet connection. Please check your network.";
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           sender: "bot",
-          text: "❗ Something went wrong while fetching the response.",
+          text: errorMessage,
         },
       ]);
     } finally {
@@ -308,6 +298,34 @@ Answer concisely and give actionable suggestions.
               </div>
             </motion.div>
           ))}
+          
+          {/* Loading indicator */}
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
+              <div className="max-w-[80%] flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="p-2 rounded-full bg-green-400/10">
+                    <Bot className="w-5 h-5 text-green-300" />
+                  </div>
+                </div>
+                <div className="rounded-2xl px-5 py-3 text-sm bg-[#2f3d70] text-white rounded-bl-none">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <span className="text-gray-300">Thinking...</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          
           <div ref={chatEndRef} />
         </div>
 
@@ -320,13 +338,13 @@ Answer concisely and give actionable suggestions.
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !loading && sendMessage()}
               placeholder="Ask something like: How can I reduce my food spending?"
-              className="flex-1 rounded-full bg-[#1f2e50] placeholder:text-gray-400 text-sm px-4 py-3 focus:outline-none text-white"
+              className="flex-1 rounded-full bg-[#1f2e50] placeholder:text-gray-400 text-sm px-4 py-3 focus:outline-none text-white focus:ring-2 focus:ring-indigo-500"
               disabled={loading || contextLoading}
             />
             <button
               onClick={sendMessage}
               disabled={loading || !input.trim() || contextLoading}
-              className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-full text-sm font-medium disabled:opacity-50"
+              className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-full text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white"
               style={{ minWidth: 100 }}
             >
               <SendHorizonal size={16} />

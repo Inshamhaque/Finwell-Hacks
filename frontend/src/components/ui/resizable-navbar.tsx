@@ -7,7 +7,7 @@ import {
   useScroll,
   useMotionValueEvent,
 } from "motion/react";
-
+// import logo from "../../assets/Financeer.png"
 import React, { useRef, useState } from "react";
 
 
@@ -103,7 +103,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         minWidth: "800px",
       }}
       className={cn(
-        "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-transparent px-4 py-4 lg:flex dark:bg-transparent",
+        "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-transparent px-4  lg:flex dark:bg-transparent",
         visible && "bg-black/80 dark:bg-neutral-950/80",
         className,
       )}
@@ -234,15 +234,15 @@ export const NavbarLogo = ({ show }) => {
   return (
     <a
       href="#"
-      className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-xl font-normal text-black"
+      className="relative z-20 mr-4 flex items-center space-x-2 px-2 text-xl font-normal text-black"
     >
       <img
-        src="https://assets.aceternity.com/logo-dark.png"
+        src="/Financeer.png"
         alt="logo"
-        width={30}
+        width={200}
         height={30}
       />
-      {show && <span className="text-large text-black dark:text-white">Financeer</span>}
+      
     </a>
   );
 };
