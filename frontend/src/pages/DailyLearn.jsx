@@ -7,8 +7,6 @@ import ReactMarkdown from 'react-markdown';
 import { BACKEND_URL } from '../config';
 const token = localStorage.getItem("token");
 
-// OpenAI API configuration
-const OPENAI_API_KEY = import.meta.VITE_OPENAI_API_KEY 
 const learningTracks = [
   {
     id: 1,
@@ -80,86 +78,49 @@ function getRandomTracks(arr, count) {
   return shuffled.slice(0, count);
 }
 
-// Enhanced AI chat function using RAG
+// Updated AI chat function using backend API
 const getAIResponse = async (userMessage, context = null) => {
   try {
-    let systemPrompt = `You are FinBot, a friendly financial education tutor. You help users learn about finance through engaging conversations.
-
-Rules:
-1. Keep responses conversational and engaging
-2. Provide practical examples when explaining concepts
-3. If user asks about learning tracks, suggest they browse available options
-4. If user wants to continue a specific track, guide them to the learning content
-5. Always be encouraging and supportive
-6. Keep responses under 200 words for chat interface`;
-
-    if (context) {
-      systemPrompt += `\n\nContext: ${JSON.stringify(context)}`;
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    const response = await axios.post(`${BACKEND_URL}/ai/chat`, {
+      userMessage,
+      context
+    }, {
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
-        ],
-        max_tokens: 300,
-        temperature: 0.7,
-      }),
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API request failed with status ${response.status}`);
+    if (response.data.success) {
+      return response.data.message;
+    } else {
+      throw new Error('Failed to get AI response');
     }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
   } catch (error) {
-    console.error('OpenAI API error:', error);
+    console.error('AI chat API error:', error);
     return "I'm here to help you learn about finance! You can ask me questions about financial topics, start a new learning track, or continue with your current progress. What would you like to explore today?";
   }
 };
 
-// AI-driven learning content
+// Updated AI-driven learning content using backend API
 const getAILearningContent = async (dayData) => {
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    const response = await axios.post(`${BACKEND_URL}/ai/learning-content`, {
+      dayData
+    }, {
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are a financial education tutor. Explain the given topic in a clear, engaging way with practical examples. Make it interactive and easy to understand. End with encouraging the user to take the quiz when they feel ready.' 
-          },
-          { 
-            role: 'user', 
-            content: `Teach me about: "${dayData.topic}"\n\nBase content: ${dayData.content}\n\nMake this engaging and include real-world examples.` 
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-      }),
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API request failed with status ${response.status}`);
+    if (response.data.success) {
+      return response.data.content;
+    } else {
+      throw new Error('Failed to get learning content');
     }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
   } catch (error) {
-    console.error('OpenAI API error:', error);
+    console.error('AI learning content API error:', error);
     return `**${dayData.topic}**\n\n${dayData.content}\n\nThis is a fundamental concept in finance. Take your time to understand it, and when you're ready, let me know if you'd like to take the quiz!`;
   }
 };
@@ -533,7 +494,7 @@ export default function DailyLearn() {
         currentTopic: currentDayData?.topic
       } : null;
 
-      const aiResponse = await getAIResponse(messageText, context);
+      const aiResponse = await getAIResponse(messageText, "You are Finance Specialist, explain this person like a 5 year baby");
       
       setIsTyping(false);
       
