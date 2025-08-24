@@ -1,1 +1,1 @@
-export const BACKEND_URL='https://finwell-server.onrender.com'
+export const BACKEND_URL='https://finwell-hacks-1lha.onrender.com'
