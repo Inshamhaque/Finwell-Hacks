@@ -6,6 +6,7 @@ import { getAll } from "../controllers/user.controller.js";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 const userRouter = express.Router();
+const bankServer = 'https://bank-server-v9aq.onrender.com'
 
 userRouter.post("/submit", async (req, res) => {
   const { name, email, password, googleId, budgetPerMonth, investmentSkill } =
@@ -18,7 +19,7 @@ userRouter.post("/submit", async (req, res) => {
     }
 
     const bankRes = await axios.post(
-      "https://bank-server-1-3s50.onrender.com/link-bank",
+      `${bankServer}`,
       {
         name,
         email,
@@ -155,7 +156,7 @@ userRouter.post("/transaction", verifyToken, async (req, res) => {
     }
 
     const bankTxResp = await axios.post(
-      "https://bank-server-1-3s50.onrender.com/transactions",
+      `${bankServer}/transactions`,
       txPayload,
       { headers }
     );
@@ -164,7 +165,7 @@ userRouter.post("/transaction", verifyToken, async (req, res) => {
 
     // Re-link bank to get fresh snapshot (accounts + transactions)
     const bankLinkRes = await axios.post(
-      "https://bank-server-1-3s50.onrender.com/link-bank",
+      `${bankServer}/link-bank`,
       {
         name: user.name,
         email: user.email,
