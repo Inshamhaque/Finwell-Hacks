@@ -7,7 +7,7 @@ import OcrRouter from "./Routes/OcrRouter.js";
 import stockRouter from "./Routes/stock.routes.js";
 import learnRouter from "./Routes/Dailylearn.routes.js";
 import aiRouter from "./Routes/aiChat.routes.js";
-import chatBotRouter from "./routes/chatbot.routes.js"
+import chatBotRouter from "./Routes/chatbot.routes.js"
 dotenv.config();
 
 const app = express();
